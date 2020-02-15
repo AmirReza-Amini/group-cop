@@ -1,14 +1,17 @@
 {
-  "name": "ara_tlg_bot",
-  "version": "1.0.0",
+  "name": "groupcop",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./server.js"
+    "start": "nodemon ./bin/www"
   },
   "dependencies": {
-    "ioredis": "^4.14.1",
-    "jalali-moment": "^3.3.3",
-    "mongoose": "^5.7.10",
+    "cheerio": "^1.0.0-rc.2",
+    "cookie-parser": "~1.4.3",
+    "express": "^4.16.4",
+    "moment": "^2.24.0",
+    "mongoose": "^5.4.7",
+    "node-schedule": "^1.3.1",
     "node-telegram-bot-api": "^0.30.0"
   }
 }
