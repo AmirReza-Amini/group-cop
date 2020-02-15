@@ -1,0 +1,14 @@
+{
+  "name": "ara_tlg_bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "nodemon ./server.js"
+  },
+  "dependencies": {
+    "ioredis": "^4.14.1",
+    "jalali-moment": "^3.3.3",
+    "mongoose": "^5.7.10",
+    "node-telegram-bot-api": "^0.30.0"
+  }
+}
