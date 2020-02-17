@@ -120,7 +120,6 @@ bot.on('callback_query', msg => {
 
 
 bot.on('message', async msg => {
-    console.log(msg.from.id);
     groupBl.Add(msg); // Add if not in Db   
     if (msg.from.id != setting.admin && !setting.allowedGroups.includes(msg.chat.id)) {
         fn.SendTextMessage(bot, msg, `شما مجاز به استفاده از ربات نیستید!!!
@@ -131,7 +130,6 @@ bot.on('message', async msg => {
 
     let commands = ['/lock@araMobserbot', '/unlock@araMobserbot', '/dailyreport@araMobserbot']
     if (msg.text == '/add') {
-        console.log('ADD');
         setting.allowedGroups.push(msg.from.id)
     }
     else if (msg.reply_markup && msg.reply_markup.inline_keyboard[0][0].text != 'Show comments')
@@ -163,7 +161,6 @@ bot.on('message', async msg => {
 
         if (msg.entities && msg.entities[0].type == 'bot_command') {
             let isAdmin = await fn.IsAdmin(bot, msg);
-            console.log('Is Admin: ', isAdmin)
             if (isAdmin || msg.from.id == setting.admin) {
                 let command = msg.text;
                 switch (command) {

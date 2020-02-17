@@ -3,111 +3,103 @@ const fn = require('../bot-functions')
 const timeTools = require('../date.ext');
 const pc = require('../PersianCalendar')
 
-add = (msg) => {
+add = async (msg) => {
     let post = Post();
     post.message = msg;
     post.save();
 }
 
-deletePost = (msg) => {
-    Post.deleteOne({
+deletePost = async (msg) => {
+    await Post.deleteOne({
         'message.chat.id': msg.chat.id,
         'message.message_id': msg.message_id
-    }).exec((err, res) => { if (!err) console.log('Deleted from db') })
+    });
 }
 
-dailyReport = (bot, groupId, chatId) => {
-    console.log(new Date().toLocaleString())
+dailyReport = async (bot, groupId, chatId) => {
     let endDate = timeTools.ToEnDate(timeTools.DateToTimeStamp(new Date().toLocaleDateString()));
-    console.log('date', endDate);
-
     let timeStamp = timeTools.DateToTimeStamp(endDate);
-    console.log(timeStamp)
-    Post.find({
+    let res = await Post.find({
         'message.chat.id': groupId,
         'message.date': {
             $gt: timeStamp
         }
     }, {
-            'message.date': 1,
-            'message.from.id': 1,
-            'message.text': 1,
-            'message.from.first_name': 1,
-            'message.from.last_name': 1,
-            'message.from.username': 1
-        })
-        .then(res => {
-            let data = res.map(m => {
-                return {
-                    id: m.message.from.id,
-                    text: removeEmojis(m.message.text),
-                    date: timeTools.TimeStampToDateTime(m.message.date),
-                    name: m.message.from.first_name + (m.message.from.last_name ? ' ' + m.message.from.last_name : ''),
-                    userName: m.message.from.username ? '@' + m.message.from.username : undefined
-                }
-            })
-            let result = groupBy(data, 'id');
-            let first = data.length > 0 ? data[0].date : undefined;
-            let last = data.length > 0 ? data[data.length - 1].date : undefined;
-            let diff = first ? (((Date.parse(last) - Date.parse(first)) / 1000.0) / 60.0) / 60.0 : undefined;
-            let usernameList = []
-            var report = 'تعداد مسیج های ارسالی اعضا\n------------------------------------------\n';
-            result.forEach((d, c) => {
-                report += `${pad(c + 1)}| ${d.name}  :  ${d.count}\n`;
-                usernameList.push(d.userName);
-            });
+        'message.date': 1,
+        'message.from.id': 1,
+        'message.text': 1,
+        'message.from.first_name': 1,
+        'message.from.last_name': 1,
+        'message.from.username': 1
+    })
 
-            report += '------------------------------------------\n'
-            report += `شروع: ${first ? pc.ToPersianTime(first) : '---'}\n`
-            report += `پایان: ${last ? pc.ToPersianTime(last) : '---'}\n`
-            report += `مجموع پیام ها: ${data.length}\n`
-            report += `متوسط پیام در ساعت: ${diff ? Math.round(data.length / diff) : '---'}\n`
-            report += '------------------------------------------\n'
-            report += usernameList.filter(m => m).join(',')
-            if (data.length > 0)
-            bot.sendMessage(chatId, report);
+    let data = res.map(m => {
+        return {
+            id: m.message.from.id,
+            text: removeEmojis(m.message.text),
+            date: timeTools.TimeStampToDateTime(m.message.date),
+            name: m.message.from.first_name + (m.message.from.last_name ? ' ' + m.message.from.last_name : ''),
+            userName: m.message.from.username ? '@' + m.message.from.username : undefined
         }
-        ).catch(err=>console.log('ERROR',err));
+    })
+    let result = groupBy(data, 'id');
+    let first = data.length > 0 ? data[0].date : undefined;
+    let last = data.length > 0 ? data[data.length - 1].date : undefined;
+    let diff = first ? (((Date.parse(last) - Date.parse(first)) / 1000.0) / 60.0) / 60.0 : undefined;
+    let usernameList = []
+    var report = 'تعداد مسیج های ارسالی اعضا\n------------------------------------------\n';
+    result.forEach((d, c) => {
+        report += `${pad(c + 1)}| ${d.name}  :  ${d.count}\n`;
+        usernameList.push(d.userName);
+    });
+
+    report += '------------------------------------------\n'
+    report += `شروع: ${first ? pc.ToPersianTime(first) : '---'}\n`
+    report += `پایان: ${last ? pc.ToPersianTime(last) : '---'}\n`
+    report += `مجموع پیام ها: ${data.length}\n`
+    report += `متوسط پیام در ساعت: ${diff ? Math.round(data.length / diff) : '---'}\n`
+    report += '------------------------------------------\n'
+    report += usernameList.filter(m => m).join(',')
+    if (data.length > 0)
+        bot.sendMessage(chatId, report);
+
 }
 
-weeklyReport = (bot, groupId, chatId) => {
+weeklyReport = async (bot, groupId, chatId) => {
     let startDate = timeTools.OneWeekLater(timeTools.DateToTimeStamp(new Date().toLocaleDateString()));
     let timeStamp = timeTools.DateToTimeStamp(startDate);
-    console.log(timeStamp)
-    Post.find({
+    let res = await Post.find({
         'message.chat.id': groupId,
         'message.date': {
             $gt: timeStamp
         }
     }, {
-            'message.from.id': 1,
-            'message.from.first_name': 1,
-            'message.from.last_name': 1,
-            'message.from.username': 1
-        })
-        .then(res => {
-            let data = res.map(m => {
-                return {
-                    id: m.message.from.id,
-                    name: m.message.from.first_name + (m.message.from.last_name ? ' ' + m.message.from.last_name : ''),
-                    userName: m.message.from.username ? '@' + m.message.from.username : undefined
-                }
-            })
-            var result = groupBy(data, 'id')
-            let usernameList = []
-            var report = 'فعالان گروه در هفته ای که گذشت\n------------------------------------------\n';
-            result.forEach((d, c) => {
-                report += `${pad(c + 1)}| ${d.name}\n`;
-                usernameList.push(d.userName);
-            });
-            report += '------------------------------------------\n'
-            report += `مجموع پیام ها: ${data.length}\n`
-            report += '------------------------------------------\n'
-            report += usernameList.filter(m => m).join(',')
+        'message.from.id': 1,
+        'message.from.first_name': 1,
+        'message.from.last_name': 1,
+        'message.from.username': 1
+    })
+    let data = res.map(m => {
+        return {
+            id: m.message.from.id,
+            name: m.message.from.first_name + (m.message.from.last_name ? ' ' + m.message.from.last_name : ''),
+            userName: m.message.from.username ? '@' + m.message.from.username : undefined
+        }
+    })
+    var result = groupBy(data, 'id')
+    let usernameList = []
+    var report = 'فعالان گروه در هفته ای که گذشت\n------------------------------------------\n';
+    result.forEach((d, c) => {
+        report += `${pad(c + 1)}| ${d.name}\n`;
+        usernameList.push(d.userName);
+    });
+    report += '------------------------------------------\n'
+    report += `مجموع پیام ها: ${data.length}\n`
+    report += '------------------------------------------\n'
+    report += usernameList.filter(m => m).join(',')
 
-            if (data.length > 0)
-            bot.sendMessage(chatId, report);
-        });
+    if (data.length > 0)
+        bot.sendMessage(chatId, report);
 }
 
 pad = (d) => {

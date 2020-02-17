@@ -35,7 +35,7 @@ deleteSequentialMessages = (bot, msg, count) => {
     lastMessages.push(lastMessage);
     if (lastMessage.count > count) {
         deleteLastMessage(bot, msg);
-      //  postBl.Delete(msg);
+        //  postBl.Delete(msg);
         if (!extraAlertSent) {
             sendTextMessage(bot, msg, `دوست گرامی گرامی جناب آقای/ سرکار خانم ${user}:
 حد مجاز ارسال مطلب متوالی توسط یک اکانت، ${count} عدد می باشد.
@@ -65,7 +65,6 @@ deleteSticker = (bot, msg) => {
 deleteForwardedMessage = (bot, msg) => {
 
     if (msg.forward_from_message_id) {
-        console.log('DELETE_FORWARD')
         deleteLastMessage(bot, msg);
     }
 }
@@ -85,14 +84,12 @@ deleteMessageWithRestrictedTerms = (bot, msg) => {
 
 sendTextMessage = async (bot, msg, text, chatId = undefined) => {
 
-    console.log('INSIDE BOT')
     let id = chatId ? chatId : (msg.chat ? msg.chat.id : msg.message.chat.id)
     return bot.sendMessage(id, text);
 }
 
 deleteLastMessage = async (bot, msg, options = { allowAdmin: false, message_id: undefined }) => {
-    console.log('DELETE_LAST_MESSAGE');
-    let isNotAdmin = !(await isFromAdmin(bot, msg));
+    let isNotAdmin = !isFromAdmin(bot, msg);
     let m_id = options.message_id ? options.message_id : msg.message_id;
     if (isNotAdmin || !options.allowAdmin) {
         postBl.Delete(msg);
@@ -101,14 +98,8 @@ deleteLastMessage = async (bot, msg, options = { allowAdmin: false, message_id: 
 }
 
 isFromAdmin = async (bot, msg) => {
-    return bot.getChatAdministrators(msg.chat.id).then(admins => {
-        let ids = [];
-        admins.forEach(admin => {
-            ids.push(admin.user.id);
-        });
-
-        return ids.includes(msg.from.id);
-    });
+    let admins = await bot.getChatAdministrators(msg.chat.id);
+    return admins.some(m => m.user.id == msg.from.id);
 }
 
 module.exports = {
